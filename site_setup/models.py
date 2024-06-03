@@ -30,6 +30,10 @@ class MenuLink(models.Model):
     text: str = models.CharField(max_length=50)
     url_or_path: str = models.CharField(max_length=2048)
     new_tab: bool = models.BooleanField(default=False)
+    site_setup = models.ForeignKey(
+        'SiteSetup', on_delete=models.CASCADE, blank=True, null=True,
+        default=None,
+    )
 
     def __str__(self) -> str:
         return str(self.text)
