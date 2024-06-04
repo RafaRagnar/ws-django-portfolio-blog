@@ -1,3 +1,10 @@
+"""
+Admin interface for the site setup and menu link models.
+
+This module defines custom admin interfaces for the SiteSetup and MenuLink
+models, allowing administrators to view and edit site setup and menu link
+information.
+"""
 from django.contrib import admin
 from django.http import HttpRequest
 from site_setup.models import MenuLink, SiteSetup
