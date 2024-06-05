@@ -1,5 +1,6 @@
 from typing import Any
 from django.contrib import admin
+from django_summernote.admin import SummernoteModelAdmin
 from blog.models import Tag, Category, Page, Post
 
 
@@ -97,7 +98,7 @@ class PageAdmin(admin.ModelAdmin):
 
 
 @admin.register(Post)
-class PostAdmin(admin.ModelAdmin):
+class PostAdmin(SummernoteModelAdmin):
     """
     Custom admin interface for the Post model.
 
@@ -130,6 +131,7 @@ class PostAdmin(admin.ModelAdmin):
             Override the default save method to set the created_by and
             updated_by fields.
     """
+    summernote_fields = ('content',)
     list_display: tuple = ('id', 'title', 'is_published', 'created_by')
     list_display_links: tuple = ('title',)
     search_fields: tuple = ('id', 'slug', 'title', 'excerpt', 'content')
