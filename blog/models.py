@@ -1,27 +1,46 @@
 """
-This module contains the `Tag` and `Category` models, which represent a tag
-and a category in the application, respectively.
+This module contains the `Tag`, `Category`, `Page` and `Post` models,
+which represent a tag, a category, a page and a post in the application,
+respectively.
 
 Classes:
     Tag
         A model representing a tag in the application.
     Category
         A model representing a category in the application.
+    Page
+        A model representing a page in the application.
+    Post
+        A model representing a post in the application.
 
 Methods:
     save(*args, **kwargs)
         Override the default save method to generate a unique slug for the
-        tag or category if it does not already have one.
+        tag, category, page or post if it does not already have one.
 """
 from django.db import models
 from django.contrib.auth.models import User
+from django_summernote.models import AbstractAttachment
 from utils.rands import slugify_new
 from utils.images import resize_image
-from django_summernote.models import AbstractAttachment
 
 
 class PostAttachment(AbstractAttachment):
+    """
+    Represents an attachment for a post.
+    """
+
     def save(self, *args, **kwargs):
+        """
+        Overrides the default save method to set the file name
+        and resize the image if needed.
+
+        Args:
+            *args: Additional positional arguments to be passed to the
+                superclass's save method.
+            **kwargs: Additional keyword arguments to be passed to the
+                superclass's save method.
+        """
         if not self.name:
             self.name = self.file.name
 
@@ -119,6 +138,15 @@ class Category(models.Model):
 
 
 class Page(models.Model):
+    """
+    A model representing a page in the application.
+
+    Attributes:
+        title (str): The title of the page.
+        slug (str): A unique slug for the page.
+        is_published (bool): Whether the page is published or not.
+        content (str): The content of the page.
+    """
     class Meta:
         """
         Meta class for Django models.
@@ -140,6 +168,16 @@ class Page(models.Model):
     content = models.TextField()
 
     def save(self, *args, **kwargs):
+        """
+        Override the default save method to generate a unique slug for the
+        page if it does not already have one.
+
+        Args:
+            *args: Additional positional arguments to be passed to the
+                superclass's save method.
+            **kwargs: Additional keyword arguments to be passed to the
+                superclass's save method.
+        """
         if not self.slug:
             self.slug = slugify_new(self.title, 4)
         return super().save(*args, **kwargs)
@@ -148,13 +186,46 @@ class Page(models.Model):
         return str(self.title)
 
 
+class PostManager(models.Manager):
+    """
+    Custom manager for the Post model.
+    """
+
+    def get_published(self):
+        """
+        Returns a queryset of published posts ordered by descending pk.
+        """
+        return self.filter(is_published=True).order_by('-pk')
+
+
 class Post(models.Model):
+    """
+    A model representing a post in the application.
+
+    Attributes:
+        title (str): The title of the post.
+        slug (str): A unique slug for the post.
+        excerpt (str): A short excerpt of the post.
+        is_published (bool): Whether the post is published or not.
+        content (str): The content of the post.
+        cover (ImageField): The cover image of the post.
+        cover_in_post_content (bool): Whether to display the cover
+            image within the post's content.
+        created_at (DateTimeField): The date and time the post was created.
+        created_by (ForeignKey): The user who created the post.
+        updated_at (DateTimeField): The date and time the post was updated.
+        updated_by (ForeignKey): The user who updated the post.
+        category (ForeignKey): The category the post belongs to.
+        tags (ManyToManyField): The tags associated with the post.
+    """
     class Meta:
         """
         Meta class for Django models.
         """
         verbose_name = 'Post'
         verbose_name_plural = 'Posts'
+
+    objects = PostManager()
 
     title: str = models.CharField(max_length=65)
     slug: str = models.SlugField(
@@ -197,18 +268,26 @@ class Post(models.Model):
         return str(self.title)
 
     def save(self, *args, **kwargs):
+        """
+        Override the default save method to generate a unique slug for the
+        post and resize the cover image if needed.
+
+        Args:
+            *args: Additional positional arguments to be passed to the
+                superclass's save method.
+            **kwargs: Additional keyword arguments to be passed to the
+                superclass's save method.
+        """
         if not self.slug:
             self.slug = slugify_new(self.title, 4)
 
         current_cover_name = str(self.cover.name)
-        # print('current_cover_name', current_cover_name)
         super_save = super().save(*args, **kwargs)
         cover_changed = False
 
         if self.cover:
             cover_changed = current_cover_name != self.cover.name
 
-        # print('cover_changed', cover_changed)
         if cover_changed:
             resize_image(self.cover, 900, True, 70)
 
