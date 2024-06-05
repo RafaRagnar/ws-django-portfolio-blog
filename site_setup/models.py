@@ -62,8 +62,8 @@ class SiteSetup(models.Model):
         """
         Meta class for Django models.
         """
-        verbose_name = 'Setup'
-        verbose_name_plural = 'Setup'
+        verbose_name = 'Setup Blog'
+        verbose_name_plural = 'Setup Blog'
 
     title: str = models.CharField(max_length=65)
     description: str = models.CharField(max_length=255)
