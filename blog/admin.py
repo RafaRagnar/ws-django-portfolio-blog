@@ -1,6 +1,8 @@
+# TODO docstring
 from typing import Any
 from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
+from django.utils.safestring import mark_safe
 from blog.models import Tag, Category, Page, Post
 
 
@@ -140,10 +142,22 @@ class PostAdmin(SummernoteModelAdmin):
     list_editable: tuple = ('is_published',)
     ordering: tuple = ('-id',)
     readonly_fields: tuple = (
-        'created_at', 'updated_at', 'created_by', 'updated_by'
+        'created_at', 'updated_at', 'created_by', 'updated_by', 'link'
     )
     prepopulated_fields: dict = {'slug': ('title',)}
     autocomplete_fields: tuple = ('category', 'tags')
+
+    def link(self, obj):
+        # TODO docstring
+        if not obj.pk:
+            return '-'
+
+        url_of_post = obj.get_absolute_url()
+        safe_link = mark_safe(
+            f'<a target="_blank" href="{url_of_post}">Ver post</a>'
+        )
+
+        return safe_link
 
     def save_model(
             self, request: Any, obj: Any, form: Any, change: Any) -> None:

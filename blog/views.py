@@ -1,3 +1,4 @@
+# TODO docstring
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from blog.models import Post
@@ -6,6 +7,7 @@ PER_PAGE = 9
 
 
 def index(request):
+    # TODO docstring
     posts = Post.objects.get_published()
 
     paginator = Paginator(posts, PER_PAGE)
@@ -22,6 +24,7 @@ def index(request):
 
 
 def page(request):
+    # TODO docstring
     return render(
         request,
         'blog/pages/page.html',
@@ -32,6 +35,7 @@ def page(request):
 
 
 def post(request):
+    # TODO docstring
     return render(
         request,
         'blog/pages/post.html',
