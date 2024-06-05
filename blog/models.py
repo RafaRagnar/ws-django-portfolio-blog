@@ -95,3 +95,33 @@ class Category(models.Model):
 
     def __str__(self) -> str:
         return str(self.name)
+
+
+class Page(models.Model):
+    class Meta:
+        """
+        Meta class for Django models.
+        """
+        verbose_name = 'Page'
+        verbose_name_plural = 'Pages'
+
+    title: str = models.CharField(max_length=65)
+    slug: str = models.SlugField(
+        unique=True, default="", null=False, blank=True, max_length=255
+    )
+    is_published: bool = models.BooleanField(
+        default=False,
+        help_text=(
+            'Este campo precisará estar marcado'
+            'para a página ser exibida publicamente.'
+        ),
+    )
+    content = models.TextField()
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify_new(self.title, 4)
+        return super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return str(self.title)
