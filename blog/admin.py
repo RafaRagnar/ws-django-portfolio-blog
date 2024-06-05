@@ -1,3 +1,4 @@
+from typing import Any
 from django.contrib import admin
 from blog.models import Tag, Category, Page, Post
 
@@ -105,24 +106,29 @@ class PostAdmin(admin.ModelAdmin):
 
     Attributes:
         list_display (tuple): A tuple of field names to display in the list
-        view.
+            view.
         list_display_links (tuple): A tuple of field names to use as links in
-        the list view.
+            the list view.
         search_fields (tuple): A tuple of field names to use for searching.
         list_per_page (int): The number of items to display per page in the
-        list view.
+            list view.
         list_filter (tuple): A tuple of field names to use for filtering the
-        list view.
+            list view.
         list_editable (tuple): A tuple of field names to make editable in the
-        list view.
+            list view.
         ordering (tuple): A tuple of field names to use for ordering the list
-        view.
+            view.
         readonly_fields (tuple): A tuple of field names to make read-only in
-        the form view.
+            the form view.
         prepopulated_fields (dict): A dictionary of field names to use for
-        prepopulating fields in the form view.
+            prepopulating fields in the form view.
         autocomplete_fields (tuple): A tuple of field names to use for
-        autocompleting fields in the form view.
+            autocompleting fields in the form view.
+
+    Methods:
+        save_model(request, obj, form, change)
+            Override the default save method to set the created_by and
+            updated_by fields.
     """
     list_display: tuple = ('id', 'title', 'is_published', 'created_by')
     list_display_links: tuple = ('title',)
@@ -136,3 +142,11 @@ class PostAdmin(admin.ModelAdmin):
     )
     prepopulated_fields: dict = {'slug': ('title',)}
     autocomplete_fields: tuple = ('category', 'tags')
+
+    def save_model(
+            self, request: Any, obj: Any, form: Any, change: Any) -> None:
+        if change:
+            obj.updated_by = request.user
+        else:
+            obj.created_by = request.user
+        obj.save()
