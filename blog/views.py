@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.db.models import Q
 from django.contrib.auth.models import User
-from django.http import Http404
+from django.http import Http404, HttpRequest, HttpResponse
 from blog.models import Post, Page
 
 
@@ -30,6 +30,11 @@ class PostListView(ListView):
                   descending order).
         paginate_by: The number of posts displayed per page.
         queryset: The queryset of published posts.
+    Methods:
+        get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+            Overrides the default method to add a custom `page_title` to the
+            context.
+            Returns the context data for the template.
     """
     model: type[Post] = Post
     template_name: str = 'blog/pages/index.html'
@@ -39,43 +44,79 @@ class PostListView(ListView):
     queryset: QuerySet[Post] = Post.objects.get_published()
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        """
-        Returns the context data for the template, including the page title.
-
-        This method overrides the default behavior to add a custom `page_title`
-        to the context.
-
-        Args:
-            kwargs: Keyword arguments passed to the method.
-
-        Returns:
-            A dictionary containing the context data for the template.
-        """
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Home -'
         return context
 
-    # def get_queryset(self) -> QuerySet[Any]:
-    #     queryset = super().get_queryset()
-    #     queryset = queryset.filter(is_published=True)
-    #     return queryset
 
-# def index(request):
-#     # TODO docstring
-#     posts = Post.objects.get_published()
+class CreateByListView(PostListView):
+    """
+    Class-based view specifically tailored for displaying posts created by a
+    particular user.
 
-#     paginator = Paginator(posts, PER_PAGE)
-#     page_number = request.GET.get('page')
-#     page_obj = paginator.get_page(page_number)
+    Extends `PostListView` to filter displayed posts based on the provided
+    author's primary key. Provides context data including the author's full
+    name and a customized page title.
 
-#     return render(
-#         request,
-#         'blog/pages/index.html',
-#         {
-#             'page_obj': page_obj,
-#             'page_title': 'Home - ',
-#         }
-#     )
+    Attributes:
+        _temp_context (dict[str, Any]): Temporary context data storage
+        (private).
+
+    Methods:
+        __init__(self, **kwargs: Any) -> None:
+            Initializes the view and creates a temporary context dictionary.
+        get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+            Overrides the base class method to incorporate author-specific
+            information in the context.
+        get_queryset(self) -> QuerySet[Post]:
+            Overrides the base class method to filter the queryset based on the
+            author's primary key.
+            Raises a 404 (Not Found) error if the author is not found.
+        get(self, request: HttpRequest, *args: Any,
+        **kwargs: Any) -> HttpResponse:
+            Handles GET requests, retrieves the author from the request URL,
+            and filters the queryset if an author is found. Raises a 404 error
+            if the author is not found.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._temp_context: dict[str, Any] = {}
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        ctx = super().get_context_data(**kwargs)
+        user = self._temp_context['user']
+        user_full_name = user.username
+
+        if user.first_name:
+            user_full_name = f"{user.first_name} {user.last_name}"
+        page_title = 'Posts de ' + user_full_name + ' - '
+
+        ctx.update({'page_title': page_title, })
+
+        return ctx
+
+    def get_queryset(self) -> QuerySet[Any]:
+        qs = super().get_queryset()
+        qs = qs.filter(created_by__pk=self._temp_context['user'].pk)
+        return qs
+
+    def get(
+            self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
+        author_pk = self.kwargs.get('author_pk')
+        user = User.objects.filter(pk=author_pk).first()
+
+        if user is None:
+            # return redirect('blog:index') caso queira redirecionar
+            raise Http404()
+
+        self._temp_context.update({
+            'author_pk': author_pk,
+            'user': user,
+        })
+
+        return super().get(request, *args, **kwargs)
 
 
 def created_by(request, author_pk):
