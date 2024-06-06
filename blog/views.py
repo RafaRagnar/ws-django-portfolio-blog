@@ -41,7 +41,7 @@ class PostListView(ListView):
     context_object_name: str = 'posts'
     ordering: str = '-pk'
     paginate_by: int = PER_PAGE
-    queryset: QuerySet[Post] = Post.objects.get_published()
+    queryset: QuerySet[Post] = Post.objects.get_published()  # type: ignore
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -93,13 +93,13 @@ class CreateByListView(PostListView):
         page_title = 'Posts de ' + user_full_name + ' - '
 
         ctx.update({'page_title': page_title, })
-
         return ctx
 
-    def get_queryset(self) -> QuerySet[Any]:
+    def get_queryset(self) -> QuerySet[Any]:  # type: ignore
         qs = super().get_queryset()
-        qs = qs.filter(created_by__pk=self._temp_context['user'].pk)
-        return qs
+        qs = qs.filter(  # type: ignore
+            created_by__pk=self._temp_context['user'].pk)
+        return qs  # type: ignore
 
     def get(
             self, request: HttpRequest, *args: Any, **kwargs: Any
@@ -108,7 +108,7 @@ class CreateByListView(PostListView):
         user = User.objects.filter(pk=author_pk).first()
 
         if user is None:
-            # return redirect('blog:index') caso queira redirecionar
+            # return redirect('blog:index') if you want to redirect
             raise Http404()
 
         self._temp_context.update({
@@ -119,32 +119,42 @@ class CreateByListView(PostListView):
         return super().get(request, *args, **kwargs)
 
 
-def created_by(request, author_pk):
-    # TODO docstring
-    user = User.objects.filter(pk=author_pk).first()
+class CategoryListView(PostListView):
+    """
+    Class-based view for displaying a paginated list of published posts
+    filtered by a specific category.
 
-    if user is None:
-        raise Http404()
+    This view inherits from `PostListView` and further filters the queryset
+    based on the provided category slug. It also updates the page title
+    to reflect the selected category.
 
-    posts = Post.objects.get_published().filter(created_by__pk=author_pk)
-    user_full_name = user.username
+    Attributes:
+        allow_empty: Specifies that the view should not allow empty
+                     querysets, thus raising a 404 error if no posts
+                     are found for the given category.
 
-    if user.first_name:
-        user_full_name = f'{user.first_name} {user.last_name}'
-    page_title = 'Posts de ' + user_full_name + ' - '
+    Methods:
+        get_queryset(self) -> QuerySet[Any]:
+            Overrides the parent method to filter the queryset by the
+            category slug provided in the URL.
+            Returns the filtered queryset of posts.
+        get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+            Overrides the parent method to add a custom `page_title`
+            based on the category name.
+            Returns the context data for the template.
+    """
+    allow_empty = False
 
-    paginator = Paginator(posts, PER_PAGE)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    def get_queryset(self) -> QuerySet[Any]:  # type: ignore
+        return super().get_queryset().filter(  # type: ignore
+            category__slug=self.kwargs.get('slug')
+        )
 
-    return render(
-        request,
-        'blog/pages/index.html',
-        {
-            'page_obj': page_obj,
-            'page_title': page_title,
-        }
-    )
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        ctx = super().get_context_data(**kwargs)
+        page_title = f'{self.object_list[0].category.name} - Categoria - '
+        ctx.update({'page_title': page_title, })
+        return ctx
 
 
 def category(request, slug):
