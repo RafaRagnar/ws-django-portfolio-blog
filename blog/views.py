@@ -2,7 +2,6 @@
 from typing import Any
 from django.db.models.query import QuerySet
 from django.views.generic import ListView
-from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -157,50 +156,57 @@ class CategoryListView(PostListView):
         return ctx
 
 
-def category(request, slug):
-    # TODO docstring
-    posts = Post.objects.get_published().filter(category__slug=slug)
+class TagListView(PostListView):
+    """
+    Class-based view for displaying a paginated list of published posts
+    filtered by a specific tag.
 
-    paginator = Paginator(posts, PER_PAGE)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    This view inherits from `PostListView` and further filters the queryset
+    based on the provided tag slug. It also updates the page title
+    to reflect the selected tag. Additionally, it handles cases where
+    no posts are found for the given tag or the tag itself doesn't exist.
 
-    if len(posts) == 0:
-        raise Http404()
+    Attributes:
+        allow_empty: Specifies that the view should not allow empty
+                     querysets, thus raising a 404 error if no posts
+                     are found for the given tag.
 
-    page_title = f'{page_obj[0].category.name} - Categoria - '
+    Methods:
+        get_queryset(self) -> QuerySet[Any]:
+            Overrides the parent method to filter the queryset by the
+            tag slug provided in the URL.
+            Returns the filtered queryset of posts.
+        get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+            Overrides the parent method to add a custom `page_title`
+            based on the tag name and handles cases where the tag
+            doesn't exist or no posts are found for that tag.
+            Returns the context data for the template.
+    """
+    allow_empty = False
 
-    return render(
-        request,
-        'blog/pages/index.html',
-        {
-            'page_obj': page_obj,
-            'page_title': page_title,
-        }
-    )
+    def get_queryset(self) -> QuerySet[Any]:  # type: ignore
+        return super().get_queryset().filter(  # type: ignore
+            tags__slug=self.kwargs.get('slug')
+        )
 
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        ctx = super().get_context_data(**kwargs)
+        slug = self.kwargs.get('slug')
+        posts = self.get_queryset()  # Get filtered posts
 
-def tag(request, slug):
-    # TODO docstring
-    posts = Post.objects.get_published().filter(tags__slug=slug)
+        if not posts:  # Check if there are any posts
+            raise Http404("Nenhum post encontrado com essa tag")
 
-    paginator = Paginator(posts, PER_PAGE)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+        # Get the first tag object from the first post's tags
+        tag_object = posts[0].tags.filter(slug=slug).first()
 
-    if len(posts) == 0:
-        raise Http404()
+        if tag_object:
+            page_title = f'{tag_object.name} - Tag - '
+        else:
+            raise Http404("Tag não encontrada")
 
-    page_title = f'{page_obj[0].tags.first().name} - Tag - '
-
-    return render(
-        request,
-        'blog/pages/index.html',
-        {
-            'page_obj': page_obj,
-            'page_title': page_title,
-        }
-    )
+        ctx.update({'page_title': page_title, })
+        return ctx
 
 
 def search(request):
