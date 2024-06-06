@@ -1,4 +1,7 @@
 # TODO docstring
+from typing import Any
+from django.db.models.query import QuerySet
+from django.views.generic import ListView
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.db.models import Q
@@ -6,25 +9,73 @@ from django.contrib.auth.models import User
 from django.http import Http404
 from blog.models import Post, Page
 
+
 PER_PAGE = 9
 
 
-def index(request):
-    # TODO docstring
-    posts = Post.objects.get_published()
+class PostListView(ListView):
+    """
+    Class-based view for displaying a paginated list of published posts.
 
-    paginator = Paginator(posts, PER_PAGE)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    This view inherits from Django's `ListView` and provides filtering,
+    pagination, sorting, and context data for rendering the list of posts
+    in a template.
 
-    return render(
-        request,
-        'blog/pages/index.html',
-        {
-            'page_obj': page_obj,
-            'page_title': 'Home - ',
-        }
-    )
+    Attributes:
+        model: The model class representing the posts.
+        template_name: The HTML template for rendering the list of posts.
+        context_object_name: The name of the context variable containing the
+                             posts.
+        ordering: The default ordering for the posts (by primary key in
+                  descending order).
+        paginate_by: The number of posts displayed per page.
+        queryset: The queryset of published posts.
+    """
+    model: type[Post] = Post
+    template_name: str = 'blog/pages/index.html'
+    context_object_name: str = 'posts'
+    ordering: str = '-pk'
+    paginate_by: int = PER_PAGE
+    queryset: QuerySet[Post] = Post.objects.get_published()
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """
+        Returns the context data for the template, including the page title.
+
+        This method overrides the default behavior to add a custom `page_title`
+        to the context.
+
+        Args:
+            kwargs: Keyword arguments passed to the method.
+
+        Returns:
+            A dictionary containing the context data for the template.
+        """
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Home -'
+        return context
+
+    # def get_queryset(self) -> QuerySet[Any]:
+    #     queryset = super().get_queryset()
+    #     queryset = queryset.filter(is_published=True)
+    #     return queryset
+
+# def index(request):
+#     # TODO docstring
+#     posts = Post.objects.get_published()
+
+#     paginator = Paginator(posts, PER_PAGE)
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
+
+#     return render(
+#         request,
+#         'blog/pages/index.html',
+#         {
+#             'page_obj': page_obj,
+#             'page_title': 'Home - ',
+#         }
+#     )
 
 
 def created_by(request, author_pk):
