@@ -2,7 +2,7 @@
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.db.models import Q
-from blog.models import Post
+from blog.models import Post, Page
 
 PER_PAGE = 9
 
@@ -96,11 +96,13 @@ def search(request):
 
 def page(request, slug):
     # TODO docstring
+    page = Page.objects.filter(is_published=True).filter(slug=slug).first()
+
     return render(
         request,
         'blog/pages/page.html',
         {
-            # 'page_obj': page_obj,
+            'page': page,
         }
     )
 

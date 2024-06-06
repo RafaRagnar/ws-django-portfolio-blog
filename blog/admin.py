@@ -65,7 +65,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Page)
-class PageAdmin(admin.ModelAdmin):
+class PageAdmin(SummernoteModelAdmin):
     """
     Custom admin interface for the Page model.
 
@@ -89,6 +89,7 @@ class PageAdmin(admin.ModelAdmin):
         prepopulated_fields (dict): A dictionary of field names to use for
         prepopulating fields in the form view.
     """
+    summernote_fields = ('content',)
     list_display: tuple = ('id', 'title', 'is_published')
     list_display_links: tuple = ('title',)
     search_fields: tuple = ('id', 'slug', 'title', 'content')

@@ -168,6 +168,13 @@ class Page(models.Model):
     )
     content = models.TextField()
 
+    def get_absolute_url(self):
+        # TODO docstring
+        if not self.is_published:
+            return reverse('blog:index')
+
+        return reverse('blog:page', args=(self.slug,))
+
     def save(self, *args, **kwargs):
         """
         Override the default save method to generate a unique slug for the
