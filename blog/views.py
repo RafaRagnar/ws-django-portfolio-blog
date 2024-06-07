@@ -1,9 +1,12 @@
-# TODO docstring
+"""
+This file contains class-based views for managing blog content, including posts
+, pages, and search functionality.
+"""
 import re
 from typing import Any
 from django.db.models.query import QuerySet
 from django.views.generic import ListView, DetailView
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.http import Http404, HttpRequest, HttpResponse
@@ -143,7 +146,7 @@ class CategoryListView(PostListView):
             based on the category name.
             Returns the context data for the template.
     """
-    allow_empty = False
+    allow_empty: bool = False
 
     def get_queryset(self) -> QuerySet[Any]:  # type: ignore
         return super().get_queryset().filter(  # type: ignore
@@ -183,7 +186,7 @@ class TagListView(PostListView):
             doesn't exist or no posts are found for that tag.
             Returns the context data for the template.
     """
-    allow_empty = False
+    allow_empty: bool = False
 
     def get_queryset(self) -> QuerySet[Any]:  # type: ignore
         return super().get_queryset().filter(  # type: ignore
@@ -339,10 +342,10 @@ class PageDetailView(DetailView):
             set to include only published pages (`filter(is_published=True)`).
             Returns the filtered result set.
     """
-    model = Page
-    template_name = 'blog/pages/page.html'
-    slug_field = 'slug'
-    context_object_name = 'page'
+    model: type[Page] = Page
+    template_name: str = 'blog/pages/page.html'
+    slug_field: str = 'slug'
+    context_object_name: str = 'page'
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context_data(**kwargs)
@@ -352,24 +355,57 @@ class PageDetailView(DetailView):
 
         return ctx
 
-    def get_queryset(self) -> QuerySet[Any]:
+    def get_queryset(self) -> QuerySet[Any]:  # type: ignore
         return super().get_queryset().filter(is_published=True)
 
 
-def post(request, slug):
-    # TODO docstring
-    post_obj = Post.objects.get_published().filter(slug=slug).first()
+class PostDetailView(DetailView):
+    """
+    Displays the details of an individual blog post.
 
-    if post_obj is None:
-        raise Http404()
+    This class inherits from Django's `DetailView` and is used to manage the
+    display of specific blog posts. It retrieves the post based on the `slug`,
+    filters to show only published posts, sets the page title, and passes
+    relevant data to the HTML template.
 
-    page_title = f'{post_obj.title} - Página - '
+    Attributes:
+        model (Type[Post]): Defines the model managed by the view, in this case
+                            , `Post`. Specifying the type using `Type[Post]`
+                            improves type checking.
+        template_name (str): Specifies the HTML template used for rendering the
+                            post details.
+        slug_field (str): Indicates the field used to look up the specific post
+                        By default, `DetailView` uses the `pk` field (primary
+                        key), but here you're explicitly defining `slug`.
+        context_object_name (str): Defines the name of the context variable
+                        used to access the post object in the template.
 
-    return render(
-        request,
-        'blog/pages/post.html',
-        {
-            'post': post_obj,
-            'page_title': page_title,
-        }
-    )
+    Methods:
+        get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+            This method is called to add additional data to the context
+            dictionary that will be passed to the template. It retrieves the
+            default context from the parent class, retrieves the current post
+            object, constructs the page title, updates the context with the
+            `page_title`, and returns the updated context.
+
+        get_queryset(self) -> QuerySet[Post]:  # Corrected type annotation
+            This method is called to filter the queryset of posts. It retrieves
+            the default queryset from the parent class, filters the queryset to
+            include only published posts, and returns the filtered queryset.
+            The type annotation is corrected to `QuerySet[Post]` to reflect the
+            actual content.
+    """
+    model: type[Post] = Post
+    template_name: str = 'blog/pages/post.html'
+    slug_field: str = 'slug'
+    context_object_name: str = 'post'
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        ctx = super().get_context_data(**kwargs)
+        post_obj = self.get_object()
+        page_title = f'{post_obj.title} - Post - '
+        ctx.update({'page_title': page_title, })
+        return ctx
+
+    def get_queryset(self) -> QuerySet[Any]:  # type: ignore
+        return super().get_queryset().filter(is_published=True)
