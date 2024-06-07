@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
         "autocompleting",
+        "COOLOFF",
+        "dotenv",
         "prepopulating",
         "slugified",
         "summernote"
