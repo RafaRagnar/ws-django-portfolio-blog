@@ -2,7 +2,7 @@
 import re
 from typing import Any
 from django.db.models.query import QuerySet
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 from django.shortcuts import render, redirect
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -305,45 +305,55 @@ def sanitize_search_query(query: str) -> str:
     return query
 
 
-def search(request):
-    # TODO docstring
-    search_value = request.GET.get('search', '').strip()
-    posts = Post.objects.get_published().filter(
-        Q(title__icontains=search_value) |
-        Q(excerpt__icontains=search_value) |
-        Q(content__icontains=search_value)
-    )[0:PER_PAGE]
+class PageDetailView(DetailView):
+    """
+    Displays the details of an individual page in a blog.
 
-    page_title = f'{search_value[:30]} - Search - '
+    This class inherits from Django's `DetailView` and is used to manage the
+    display of specific pages. It retrieves the page based on the `slug`,
+    filters to show only published pages, sets the page title, and passes
+    relevant data to the HTML template.
 
-    return render(
-        request,
-        'blog/pages/index.html',
-        {
-            'page_obj': posts,
-            'search_value': search_value,
-            'page_title': page_title,
-        }
-    )
+    Attributes:
+        model (Model): Defines the model managed by the view, in this case,
+        `Page`.
+        template_name (str): Specifies the HTML template used for rendering.
+        slug_field (str): Indicates the field used to look up the individual
+                        page. By default, `DetailView` uses the `pk` field
+                        (primary key), but here you explicitly define that the
+                        `slug` field should be used.
+        context_object_name (str): Defines the name of the context variable
+                                used to access the page object in the template.
 
+    Methods:
+        get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+            This method is called to add context data to the template. It
+            retrieves the default context from the parent class, retrieves the
+            page object using `self.get_object()`, constructs the page title,
+            and updates the context with the `page_title`. Returns the updated
+            context.
 
-def page(request, slug):
-    # TODO docstring
-    page_obj = Page.objects.filter(is_published=True).filter(slug=slug).first()
+        get_queryset(self) -> QuerySet[Any]:
+            This method is called to filter the query result set. It retrieves
+            the default result set from the parent class and filters the result
+            set to include only published pages (`filter(is_published=True)`).
+            Returns the filtered result set.
+    """
+    model = Page
+    template_name = 'blog/pages/page.html'
+    slug_field = 'slug'
+    context_object_name = 'page'
 
-    if page_obj is None:
-        raise Http404()
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        ctx = super().get_context_data(**kwargs)
+        page_obj = self.get_object()
+        page_title = f'{page_obj.title} - Página - '
+        ctx.update({'page_title': page_title, })
 
-    page_title = f'{page_obj.title} - Página - '
+        return ctx
 
-    return render(
-        request,
-        'blog/pages/page.html',
-        {
-            'page': page_obj,
-            'page_title': page_title,
-        }
-    )
+    def get_queryset(self) -> QuerySet[Any]:
+        return super().get_queryset().filter(is_published=True)
 
 
 def post(request, slug):
