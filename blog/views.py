@@ -1,8 +1,9 @@
 # TODO docstring
+import re
 from typing import Any
 from django.db.models.query import QuerySet
 from django.views.generic import ListView
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.http import Http404, HttpRequest, HttpResponse
@@ -207,6 +208,101 @@ class TagListView(PostListView):
 
         ctx.update({'page_title': page_title, })
         return ctx
+
+
+class SearchListView(PostListView):
+    """
+    Class-based view for displaying a paginated list of published posts
+    filtered by a search query.
+
+    This view inherits from `PostListView` and filters the queryset
+    based on the search query provided in the URL. It also updates
+    the page title and provides the search query in the context.
+
+    Attributes:
+        _search_value: Stores the sanitized search query.
+
+    Methods:
+        setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
+            Overrides the parent method to extract and sanitize the search
+            query from the request.
+        get_queryset(self) -> QuerySet[Any]:
+            Overrides the parent method to filter the queryset based on
+            the search query.
+        get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+            Overrides the parent method to add a custom `page_title`
+            and the search query to the context.
+        get(
+            self, request: HttpRequest, *args: Any, **kwargs: Any
+            ) -> HttpResponse:
+            Overrides the default get method to redirect to the home page
+            if no search query is provided.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._search_value = ''
+
+    def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
+        self._search_value = sanitize_search_query(
+            request.GET.get('search', '').strip()
+        )
+        # self._search_value = request.GET.get('search', '').strip()
+        return super().setup(request, *args, **kwargs)
+
+    def get_queryset(self) -> QuerySet[Any]:  # type: ignore
+        search_value = self._search_value
+        return super().get_queryset().filter(  # type: ignore
+            Q(title__icontains=search_value) |
+            Q(excerpt__icontains=search_value) |
+            Q(content__icontains=search_value)
+        )[0:PER_PAGE]
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        ctx = super().get_context_data(**kwargs)
+        search_value = self._search_value
+        ctx.update({
+            'page_title': f'{search_value[:30]} - Search - ',
+            'search_value': search_value,
+        })
+        return ctx
+
+    def get(
+            self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
+        if self._search_value == '':
+            return redirect('blog:index')
+        return super().get(request, *args, **kwargs)
+
+
+def sanitize_search_query(query: str) -> str:
+    """
+    Sanitizes a search query string to improve search functionality and
+    security.
+
+    This function performs the following actions:
+
+    1. **Replaces special characters:** It replaces all characters that are
+    not alphanumeric (letters, numbers, and underscores) or whitespace with
+    spaces. This helps prevent unexpected behavior in search results and
+    reduces the risk of security vulnerabilities like cross-site scripting
+    (XSS) attacks.
+    2. **Removes extra spaces:** It removes any extra spaces that may be
+    present in the query string. This ensures consistency and improves the
+    readability of the search query.
+    3. **Converts to lowercase:** It converts all characters in the query
+    string to lowercase. This makes the search case-insensitive, improving
+    the user experience by matching searches regardless of capitalization.
+
+    Args:
+        query (str): The search query string to be sanitized.
+
+    Returns:
+        str: The sanitized search query string.
+    """
+    query = re.sub(r'[^\w\s]', ' ', query)
+    query = ' '.join(query.lower().split())
+    return query
 
 
 def search(request):
