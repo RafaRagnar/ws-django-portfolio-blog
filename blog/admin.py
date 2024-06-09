@@ -1,8 +1,20 @@
-# TODO docstring
+"""
+This module defines custom admin interfaces for the blog application models:
+
+- TagAdmin: Allows administrators to view and edit tag information.
+- CategoryAdmin: Allows administrators to view and edit category information.
+- PageAdmin: Allows administrators to view and edit page information.
+- PostAdmin: Allows administrators to view and edit post information, including
+  overriding the `save_model` method to set `created_by` and `updated_by`
+  fields.
+
+These admin interfaces provide a user-friendly way for administrators to manage
+blog content and settings.
+"""
 from typing import Any
 from django.contrib import admin
-from django_summernote.admin import SummernoteModelAdmin
 from django.utils.safestring import mark_safe
+from django_summernote.admin import SummernoteModelAdmin  # type: ignore
 from blog.models import Tag, Category, Page, Post
 
 
@@ -149,7 +161,12 @@ class PostAdmin(SummernoteModelAdmin):
     autocomplete_fields: tuple = ('category', 'tags')
 
     def link(self, obj):
-        # TODO docstring
+        """
+        Generates an HTML link to the detail page of a given object.
+
+        This method is likely used within a template context to create
+        clickable links for objects (e.g., posts) rendered in the template.
+        """
         if not obj.pk:
             return '-'
 

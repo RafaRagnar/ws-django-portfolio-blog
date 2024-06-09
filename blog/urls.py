@@ -15,21 +15,22 @@ It handles various functionalities, including:
 The `app_name` variable is set to 'blog' for easier namespacing of URLs.
 """
 from django.urls import path
-from blog.views import (PostDetailView, PageDetailView, CategoryListView,
-                        TagListView, SearchListView, PostListView,
-                        CreateByListView)
+from . import views
 
 app_name = 'blog'
 
 urlpatterns = [
-    path('', PostListView.as_view(), name='index'),
-    path('post/<slug:slug>/', PostDetailView.as_view(), name='post'),
-    path('page/<slug:slug>/', PageDetailView.as_view(), name='page'),
+    path('', views.PostListView.as_view(), name='index'),
+    path('post/<slug:slug>/', views.PostDetailView.as_view(), name='post'),
+    path('page/<slug:slug>/', views.PageDetailView.as_view(), name='page'),
     path(
         'created_by/<int:author_pk>/',
-        CreateByListView.as_view(), name='created_by'
+        views.CreateByListView.as_view(), name='created_by'
     ),
-    path('category/<slug:slug>/', CategoryListView.as_view(), name='category'),
-    path('tag/<slug:slug>/', TagListView.as_view(), name='tag'),
-    path('search/', SearchListView.as_view(), name='search'),
+    path(
+        'category/<slug:slug>/',
+        views.CategoryListView.as_view(), name='category'
+    ),
+    path('tag/<slug:slug>/', views.TagListView.as_view(), name='tag'),
+    path('search/', views.SearchListView.as_view(), name='search'),
 ]

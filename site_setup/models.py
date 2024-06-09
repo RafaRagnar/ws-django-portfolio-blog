@@ -29,13 +29,13 @@ class MenuLink(models.Model):
         verbose_name = 'Menu Link'
         verbose_name_plural = 'Menu Links'
 
-    text: str = models.CharField(max_length=50)
-    url_or_path: str = models.CharField(max_length=2048)
-    new_tab: bool = models.BooleanField(default=False)
+    text: str = models.CharField(max_length=50)  # type: ignore
+    url_or_path: str = models.CharField(max_length=2048)  # type: ignore
+    new_tab: bool = models.BooleanField(default=False)  # type: ignore
     site_setup = models.ForeignKey(
         'SiteSetup', on_delete=models.CASCADE, blank=True, null=True,
         default=None, related_name='menu',
-    )
+    )  # type: ignore
 
     def __str__(self) -> str:
         return str(self.text)
@@ -65,15 +65,15 @@ class SiteSetup(models.Model):
         verbose_name = 'Setup Blog'
         verbose_name_plural = 'Setup Blog'
 
-    title: str = models.CharField(max_length=65)
-    description: str = models.CharField(max_length=255)
+    title: str = models.CharField(max_length=65)  # type: ignore
+    description: str = models.CharField(max_length=255)  # type: ignore
 
-    show_header: bool = models.BooleanField(default=True)
-    show_search: bool = models.BooleanField(default=True)
-    show_menu: bool = models.BooleanField(default=True)
-    show_description: bool = models.BooleanField(default=True)
-    show_pagination: bool = models.BooleanField(default=True)
-    show_footer: bool = models.BooleanField(default=True)
+    show_header: bool = models.BooleanField(default=True)  # type: ignore
+    show_search: bool = models.BooleanField(default=True)  # type: ignore
+    show_menu: bool = models.BooleanField(default=True)  # type: ignore
+    show_description: bool = models.BooleanField(default=True)  # type: ignore
+    show_pagination: bool = models.BooleanField(default=True)  # type: ignore
+    show_footer: bool = models.BooleanField(default=True)  # type: ignore
 
     favicon = models.ImageField(
         upload_to='assets/favicon/%Y/%m/',

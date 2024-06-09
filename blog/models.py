@@ -19,9 +19,9 @@ Methods:
         tag, category, page or post if it does not already have one.
 """
 from django.db import models
-from django.contrib.auth.models import User
-from django_summernote.models import AbstractAttachment
 from django.urls import reverse
+from django.contrib.auth.models import User
+from django_summernote.models import AbstractAttachment  # type: ignore
 from utils.rands import slugify_new
 from utils.images import resize_image
 
@@ -46,6 +46,7 @@ class PostAttachment(AbstractAttachment):
             self.name = self.file.name
 
         current_file_name = str(self.file.name)
+        # pylint: disable=assignment-from-no-return
         super_save = super().save(*args, **kwargs)
         file_changed = False
 
@@ -73,10 +74,10 @@ class Tag(models.Model):
         verbose_name = 'Tag'
         verbose_name_plural = 'Tags'
 
-    name: str = models.CharField(max_length=255)
+    name: str = models.CharField(max_length=255)  # type: ignore
     slug: str = models.SlugField(
         unique=True, default=None, null=True, blank=True,
-        max_length=255,
+        max_length=255,  # type: ignore
     )
 
     def save(self, *args, **kwargs):
@@ -113,10 +114,10 @@ class Category(models.Model):
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
 
-    name: str = models.CharField(max_length=255)
+    name: str = models.CharField(max_length=255)  # type: ignore
     slug: str = models.SlugField(
         unique=True, default=None, null=True, blank=True,
-        max_length=255,
+        max_length=255,  # type: ignore
     )
 
     def save(self, *args, **kwargs):
@@ -155,21 +156,26 @@ class Page(models.Model):
         verbose_name = 'Page'
         verbose_name_plural = 'Pages'
 
-    title: str = models.CharField(max_length=65)
+    title: str = models.CharField(max_length=65)  # type: ignore
     slug: str = models.SlugField(
         unique=True, default="", null=False, blank=True, max_length=255
-    )
+    )  # type: ignore
     is_published: bool = models.BooleanField(
         default=False,
         help_text=(
             'Este campo precisará estar marcado'
             'para a página ser exibida publicamente.'
         ),
-    )
-    content = models.TextField()
+    )  # type: ignore
+    content = models.TextField()  # type: ignore
 
     def get_absolute_url(self):
-        # TODO docstring
+        """
+        Returns the absolute URL for the detail page of the object.
+
+        This method is used to generate the canonical URL for the object, which
+        can be used for linking in templates or other contexts.
+        """
         if not self.is_published:
             return reverse('blog:index')
 
@@ -235,45 +241,50 @@ class Post(models.Model):
 
     objects = PostManager()
 
-    title: str = models.CharField(max_length=65)
+    title: str = models.CharField(max_length=65)  # type: ignore
     slug: str = models.SlugField(
         unique=True, default="", null=False, blank=True, max_length=255
-    )
-    excerpt: str = models.CharField(max_length=150)
+    )  # type: ignore
+    excerpt: str = models.CharField(max_length=150)  # type: ignore
     is_published: bool = models.BooleanField(
         default=False,
         help_text=(
             'Este campo precisará estar marcado'
             'para o post ser exibida publicamente.'
         ),
-    )
-    content = models.TextField()
+    )  # type: ignore
+    content = models.TextField()  # type: ignore
     cover = models.ImageField(upload_to='posts/%Y/%m',
                               blank=True, default='')
     cover_in_post_content: bool = models.BooleanField(
         default=True,
         help_text=('Se marcado, exibirá a capa dentro do post.'),
-    )
+    )  # type: ignore
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # type: ignore
     created_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, blank=True, null=True,
         related_name='post_created_by'
-    )
-    updated_at = models.DateTimeField(auto_now=True)
+    )  # type: ignore
+    updated_at = models.DateTimeField(auto_now=True)  # type: ignore
     updated_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, blank=True, null=True,
         related_name='post_updated_by'
-    )
+    )  # type: ignore
 
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, blank=True,
         default=None,
-    )
-    tags = models.ManyToManyField(Tag, blank=True, default='')
+    )  # type: ignore
+    tags = models.ManyToManyField(Tag, blank=True, default='')  # type: ignore
 
     def get_absolute_url(self):
-        # TODO docstring
+        """
+        Returns the absolute URL for the detail page of the post.
+
+        This method is used to generate the canonical URL for the post,
+        which can be used for linking in templates or other contexts.
+        """
         if not self.is_published:
             return reverse('blog:index')
 
@@ -297,6 +308,7 @@ class Post(models.Model):
             self.slug = slugify_new(self.title, 4)
 
         current_cover_name = str(self.cover.name)
+        # pylint: disable=assignment-from-none
         super_save = super().save(*args, **kwargs)
         cover_changed = False
 
