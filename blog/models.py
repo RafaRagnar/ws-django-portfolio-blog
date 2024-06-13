@@ -196,6 +196,8 @@ class Page(models.Model):
             self.slug = slugify_new(self.title, 4)
         return super().save(*args, **kwargs)
 
+    objects = models.Manager()
+
     def __str__(self) -> str:
         return str(self.title)
 
