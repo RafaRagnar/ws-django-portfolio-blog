@@ -248,7 +248,7 @@ class SearchListView(PostListView):
 
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         self._search_value = sanitize_search_query(
-            request.GET.get('search', '').strip()
+            request.GET.get('q', '').strip()
         )
         # self._search_value = request.GET.get('search', '').strip()
         return super().setup(request, *args, **kwargs)

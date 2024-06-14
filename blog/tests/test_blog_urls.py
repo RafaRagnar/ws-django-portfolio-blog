@@ -1,24 +1,7 @@
 """
-This test class validates that the URL patterns defined in the blog application
-are reversed correctly using the `reverse` function from Django's `django.urls`
-module.
-
-The `reverse` function takes a named URL pattern and any required arguments as
-keywords, and returns the corresponding absolute URL. These tests ensure that
-the URL patterns you've defined in your blog app's `urls.py` file map to the
-expected URLs when reversed.
-
-Each test function follows a similar structure:
-
-- It defines a clear test name, indicating the specific URL pattern being
-tested.
-- It uses `reverse` to generate the URL for the corresponding named view.
-- It asserts that the generated URL matches the expected path using
-`self.assertEqual`.
-
-These tests provide essential confidence in your application's URL routing
-mechanism, guaranteeing that users can access different sections of your blog
-using the correct URLs.
+Tests that the URL patterns defined in the blog application's `urls.py` file
+are reversed correctly using Django's `reverse` function. Each test checks if
+the generated URL matches the expected path.
 """
 from django.test import TestCase
 from django.urls import reverse
@@ -26,9 +9,7 @@ from django.urls import reverse
 
 class BlogURLsTest(TestCase):
     """
-    This test class validates that the URL patterns defined in the blog
-    application are reversed correctly using the `reverse` function from
-    Django's `django.urls` module.
+    Tests that URL patterns in the blog application are reversed correctly.
     """
 
     def test_blog_index_url_is_correct(self):

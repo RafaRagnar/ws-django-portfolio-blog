@@ -95,6 +95,8 @@ class Tag(models.Model):
             self.slug = slugify_new(self.name, 4)
         return super().save(*args, **kwargs)
 
+    objects = models.Manager()
+
     def __str__(self) -> str:
         return str(self.name)
 
@@ -134,6 +136,8 @@ class Category(models.Model):
         if not self.slug:
             self.slug = slugify_new(self.name, 4)
         return super().save(*args, **kwargs)
+
+    objects = models.Manager()
 
     def __str__(self) -> str:
         return str(self.name)
