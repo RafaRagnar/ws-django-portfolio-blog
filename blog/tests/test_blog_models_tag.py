@@ -12,7 +12,7 @@ class BlogTagModelTest(BlogTestBase):
     """
 
     def setUp(self) -> None:
-        self.tag = self.creating_category(
+        self.tag = self.creating_tag(
             name='Tag Testing',
             slug='tag_testing',
         )

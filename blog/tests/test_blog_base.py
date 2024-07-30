@@ -10,18 +10,7 @@ from django.test import TestCase
 from blog.models import Page, Post, Category, Tag, User
 
 
-class BlogTestBase(TestCase):
-    """
-    Base class for blog application tests, providing helper methods for
-    creating test objects.
-    """
-
-    def setUp(self) -> None:
-        """
-        Sets up the test environment.
-        """
-        return super().setUp()
-
+class BlogMixin:
     def creating_category(self, name='Test Category', slug='test_category'):
         """
         Creates a Category instance.
@@ -158,3 +147,26 @@ class BlogTestBase(TestCase):
             is_published=is_published,
             content=content,
         )
+
+    def creating_posts_in_batch(self, qtd=10):
+        posts = []
+        for i in range(qtd):
+            kwargs = {'slug': f'r{i}'}
+            kwargs_category = {'name': f'Cat{i}', 'slug': f'cat{i}'}
+            post = self.creating_post(
+                category_data=kwargs_category, slug=kwargs)
+            posts.append(post)
+        return posts
+
+
+class BlogTestBase(TestCase, BlogMixin):
+    """
+    Base class for blog application tests, providing helper methods for
+    creating test objects.
+    """
+
+    def setUp(self) -> None:
+        """
+        Sets up the test environment.
+        """
+        return super().setUp()
